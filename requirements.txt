@@ -1,0 +1,5 @@
+google-generativeai
+pinecone
+feedparser
+python-dotenv
+numpy
