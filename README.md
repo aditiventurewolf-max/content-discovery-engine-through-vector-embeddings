@@ -1,35 +1,33 @@
 # Content Discovery Engine
 
-A framework for semantic search and content discovery utilizing vector embeddings.
+Reads recent posts from a few blogs and shows only the ones that match what I care about.
 
-## Project Structure
+## Pipeline (from `main.py`)
 
-- `.env`: Contains your private environment variables (API keys). This file should **not** be committed to version control.
-- `.env.example`: A template showing the required environment variables.
-- `requirements.txt`: Python package dependencies for the project.
-- `.venv/`: The Python isolated virtual environment.
-- `src/`: The directory where the application's main code will be placed.
-  - `embeddings/`: Will contain logic for generating vector embeddings (e.g., with Google Generative AI).
-  - `search/`: Will contain logic for vector storage and retrieval (e.g., using Pinecone).
-  - `ingestion/`: Will contain scripts for parsing content feeds (e.g., with feedparser).
+1. Fetch the 10 most recent entries from each of five RSS feeds (BAIR blog, Astral Codex Ten, Wait But Why, Farnam Street, Daily Nous).
+2. Look up similarity against a Pinecone index of seed topics (short descriptions of things I like). Keep items with similarity above 0.75.
+3. Ask an LLM (Gemini) to score each remaining item. Keep scores of 6.5 or higher.
+4. Print the results with the score and link.
 
-## Setup Instructions
+`seed.py` loads example seed topics into Pinecone.
 
-1. **Activate the Virtual Environment**:
-   Ensure you're using the provided virtual environment to keep your dependencies isolated.
-   ```bash
-   source .venv/bin/activate
-   ```
+## Stack
 
-2. **Install Dependencies**:
-   Install the necessary libraries (`google-generativeai`, `pinecone-client`, etc.):
-   ```bash
-   pip install -r requirements.txt
-   ```
+Python, Google Gemini, Pinecone, feedparser, python-dotenv, numpy.
 
-3. **Environment Setup**:
-   Open the `.env` file (or copy `.env.example` to `.env` if not present) and add your actual API credentials:
-   ```env
-   GEMINI_API_KEY=your_actual_gemini_key
-   PINECONE_API_KEY=your_actual_pinecone_key
-   ```
+## Run it
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+# add your Gemini and Pinecone keys to a .env file
+python seed.py
+python main.py
+```
+
+## Limitations
+
+- Feeds and seed topics are hard-coded, and there is no history or de-duplication across runs.
+- Some modules that `main.py` imports (`src.search.store`, `src.scorer`) are currently inside `src.zip` and need to be unzipped to run it.
+- `test_migration.py` only checks that imports and the client load. It makes no API calls.
+- No evaluation of whether the filtered list beats the raw feed.
